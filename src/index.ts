@@ -126,10 +126,13 @@ cds.once("served", () => {
 
   const t0 = cds.env.get("requires.multitenancy.t0") ?? "t0";
 
+  // TODO: ensure only have one instance to refresh materialized view
+
   const { SELECT, INSERT, DELETE } = cds.ql;
 
   setInterval(async () => {
     try {
+      // TODO: check tenants is off-board
       const tenants = await cds.tx({ tenant: t0 }, tx =>
         tx.run(SELECT.from("cds.xt.Tenants").columns("ID"))
       );
