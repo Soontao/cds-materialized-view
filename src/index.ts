@@ -82,6 +82,7 @@ cds.once("served", () => {
     return;
   }
 
+  // REWRITE: tenant CSN for tenant onboard/upgrade
   mps.prepend(mps => {
     // @ts-ignore
     mps.after("getCsn", (csn: any) => {
@@ -101,6 +102,7 @@ cds.once("served", () => {
     });
   });
 
+  // REWRITE: database query
   db.prepend(db => {
     // TODO: maybe custom builder instead of re-write query
     db.before("READ", function _rewrite_materialized_view(req) {
@@ -130,6 +132,7 @@ cds.once("served", () => {
 
   const { SELECT, INSERT, DELETE } = cds.ql;
 
+  // JOB: refresh view metadata
   setInterval(async () => {
     try {
       // TODO: check tenants is off-board
@@ -172,44 +175,43 @@ cds.once("served", () => {
   }, 15 * 1000); // TODO: parameter
 
 
+  // JOB: refresh view content
   setInterval(async () => {
-    try {
-      for (const context of viewsToBeRefreshed.values()) {
-        try {
-          if (context.lastRefreshAt + context.interval > Date.now()) {
-            continue;
-          }
-          if (context.running) {
-            continue;
-          }
-          context.running = false;
-          const viewName = context.name;
-          const materializedViewName = getMaterializedViewName(viewName);
-          await cds.tx({ tenant: context.tenant }, async tx => {
-            await tx.run(DELETE.from(materializedViewName));
-
-            // TODO: make the query to be raw query, do not use intermediate views.
-
-            if (context.query) {
-              // @ts-ignore
-              await tx.run(INSERT.into(materializedViewName).as(context.query));
-            }
-            if (context.projection) {
-              // @ts-ignore
-              await tx.run(INSERT.into(materializedViewName).as({ SELECT: context.projection }));
-            }
-          });
+    for (const context of viewsToBeRefreshed.values()) {
+      try {
+        if (context.lastRefreshAt + context.interval > Date.now()) {
+          continue;
         }
-        catch (error) {
-          // TODO: evict after failed too many times
-          logger.error("refresh materialized view", getMaterializedViewName(context.name), "failed");
-          context.running = false;
+        if (context.running) {
+          continue;
         }
+        context.running = false;
+        const viewName = context.name;
+        const materializedViewName = getMaterializedViewName(viewName);
+
+        // run in target tenant
+        await cds.tx({ tenant: context.tenant }, async tx => {
+          await tx.run(DELETE.from(materializedViewName));
+
+          // TODO: make the query to be raw query, do not use intermediate views.
+
+          if (context.query) {
+            // @ts-ignore
+            await tx.run(INSERT.into(materializedViewName).as(context.query));
+          }
+          if (context.projection) {
+            // @ts-ignore
+            await tx.run(INSERT.into(materializedViewName).as({ SELECT: context.projection }));
+          }
+        });
+      }
+      catch (error) {
+        // TODO: evict after failed too many times
+        logger.error("refresh materialized view", getMaterializedViewName(context.name), "failed");
+        context.running = false;
       }
     }
-    catch (error) {
-      logger.error("try to refresh materialized view failed", error);
-    }
+
   }, 1 * 1000); // TODO: parameter
 
 });
