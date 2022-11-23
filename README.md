@@ -1,22 +1,28 @@
-# Typescript Project Template
+# CDS Materialized View
 
-> the typescript project template
+> Materialized View for CAP NodeJS Runtime
 
-<!-- 
-[![npm](https://img.shields.io/npm/v/<module-name>)](https://www.npmjs.com/package/<module-name>)
-![node-lts](https://img.shields.io/node/v-lts/<module-name>)
--->
+## Get Started
 
-## Setup
+```json
+{
+  "cds": {
+    "plugins": ["cds-rate-limit"]
+  }
+}
+```
 
-* `Use this template` to create new github repository.
-* update `package.json`, maintain your own package `name`, and other information like `author`/`repository`.
-* add `LICENSE` if necessary (`npx license`)
-* start your work
+```groovy
+namespace test.resources.csv.app.db;
 
-## Release
+entity Person {
+  key ID   : Integer;
+      Name : String(255);
+}
 
-> for github
+@cds.materialized.view // create materialized view
+@cds.materialized.interval : 1 // refresh interval: per second
+view UniqPersonNames as select distinct Name from Person;
+```
 
-* maintain your npm token with secret name `Z_NPM_TOKEN`
-* Run `npm run release` to publish a new version of your package
+## [LICENSE](./LICENSE)

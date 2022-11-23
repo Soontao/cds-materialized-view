@@ -1,13 +1,18 @@
 {
-  "name": "template",
+  "name": "cds-materialized-view",
+  "description": "Materialized View for CAP NodeJS Runtime",
   "version": "0.0.1",
   "main": "lib/index.js",
   "engines": {
     "node": ">=16",
     "npm": ">=7"
   },
+  "author": {
+    "name": "Theo Sun",
+    "email": "theo.sun@outlook.com"
+  },
   "scripts": {
-    "test": "jest --detectOpenHandles --passWithNoTests",
+    "test": "jest --detectOpenHandles --passWithNoTests --forceExit",
     "build": "tsc",
     "postbuild": "tsc --noEmit --p tsconfig.lib.json",
     "lint": "eslint src --fix",
@@ -28,5 +33,9 @@
     "ts-jest": "29.0.3",
     "ts-node": "10.9.1",
     "typescript": "4.9.3"
-  }
+  },
+  "dependencies": {
+    "cds-internal-tool": "^1.5.6"
+  },
+  "license": "Apache-2.0"
 }

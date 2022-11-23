@@ -9,15 +9,19 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Use Node.js
+
+      - name: Setup redis
+        uses: shogo82148/actions-setup-redis@v1
+
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
+          registry-url: https://registry.npmjs.org/
 
       - name: npm ci
         run: npm ci
@@ -27,15 +31,12 @@ jobs:
         env:
           CI: true
 
-      - run: npm shrinkwrap
+      - name: npm shrinkwrap
+        run: npm shrinkwrap
 
       - run: npm run build
 
-      - name: npm auth
-        run: npm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
-        env:
-          NPM_TOKEN: ${{secrets.NPM_TOKEN}}
-
       - name: npm auth & publish
-        run: npm publish --access public
-
+        run: npm publish --access public --tag latest
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.Z_NPM_TOKEN}}

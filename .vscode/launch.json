@@ -3,6 +3,23 @@
   "configurations": [
     {
       "type": "node",
+      "request": "launch",
+      "name": "run test app",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "cds-ts",
+        "run"
+      ],
+      "cwd": "${workspaceFolder}/test/app",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "DEBUG": "sql"
+      },
+    },
+    {
+      "type": "node",
       "name": "vscode-jest-tests",
       "request": "launch",
       "args": [

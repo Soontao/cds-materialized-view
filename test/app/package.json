@@ -1,0 +1,18 @@
+{
+  "cds": {
+    "plugins": [
+      "../../src"
+    ],
+    "requires": {
+      "multitenancy": true,
+      "extensibility": true,
+      "toggles": true,
+      "db": {
+        "kind": "sqlite",
+        "credentials": {
+          "database": ":memory:"
+        }
+      }
+    }
+  }
+}

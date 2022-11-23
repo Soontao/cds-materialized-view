@@ -1,9 +1,25 @@
-import { a } from "../src";
 
-describe("Demo Test Suite", () => {
+import { setupTest } from "cds-internal-tool";
 
-  it("should equal to 1", () => {
-    expect(a).toBe(1);
+describe("Main Test Suite", () => {
+
+  const axios = setupTest(__dirname, "./app")
+
+  axios.defaults.auth = { username: 'alice', password: '' }
+
+  beforeAll(async () => {
+    // subscribe tenant 1
+    await axios.put('/-/cds/saas-provisioning/tenant/t1', {
+      "subscribedTenantId": "t1",
+      "subscribedSubdomain": "subdomain1",
+      "eventType": "CREATE"
+    })
+  })
+
+  it('should support get metadata', async () => {
+    const { data } = await axios.get("/app/$metadata")
+    expect(data).toMatch(/UniqPeopleNames/)
   });
+
 
 });
