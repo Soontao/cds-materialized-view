@@ -12,6 +12,10 @@
     "email": "theo.sun@outlook.com"
   },
   "scripts": {
+    "install:dev": "bash install_no_trace_deps.sh",
+    "pretest": "npm run install:dev",
+    "prelint": "npm run install:dev",
+    "prebuild": "npm run install:dev",
     "test": "jest --detectOpenHandles --passWithNoTests --forceExit",
     "build": "tsc",
     "postbuild": "tsc --noEmit --p tsconfig.lib.json",
