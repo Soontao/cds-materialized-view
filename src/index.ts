@@ -5,12 +5,33 @@ import { ANNOTATIONS } from "./constants";
 import { deepClone, MATERIALIZED_VIEW_PREFIX } from "./utils";
 
 interface ViewRefreshContext {
+  /**
+   * entity name
+   */
   name: string,
+  /**
+   * tenant id
+   */
   tenant: string,
+  /**
+   * last refresh timestamp
+   */
   lastRefreshAt: number,
+  /**
+   * configured interval
+   */
   interval: number,
+  /**
+   * select
+   */
   query?: CQN,
+  /**
+   * projection
+   */
   projection?: any,
+  /**
+   * is running in another job
+   */
   running: boolean,
 }
 
@@ -81,6 +102,7 @@ cds.once("served", () => {
   });
 
   db.prepend(db => {
+    // TODO: maybe custom builder instead of re-write query
     db.before("READ", function _rewrite_materialized_view(req) {
       // @ts-ignore
       if (typeof req.query !== "object" || typeof req.query?.SELECT?.from?.ref?.[0] !== "string") {
@@ -120,9 +142,12 @@ cds.once("served", () => {
             continue;
           }
           const key = `${tenant}-${name}`;
+
+          // TODO: detect change
           if (viewsToBeRefreshed.has(key)) {
             continue;
           }
+
           viewsToBeRefreshed.set(
             key,
             {
@@ -131,7 +156,7 @@ cds.once("served", () => {
               query: def.query,
               projection: def.projection,
               lastRefreshAt: 0,
-              interval: (def[ANNOTATIONS.CDS_MATERIALIZED_INTERVAL] ?? 1) * 1000,
+              interval: (def[ANNOTATIONS.CDS_MATERIALIZED_INTERVAL] ?? 60) * 1000, // TODO: document default value
               running: false,
             }
           );
@@ -173,7 +198,7 @@ cds.once("served", () => {
           });
         }
         catch (error) {
-          // TODO: failed too many times
+          // TODO: evict after failed too many times
           logger.error("refresh materialized view", getMaterializedViewName(context.name), "failed");
           context.running = false;
         }
