@@ -1,0 +1,15 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+{
+	"name": "Node.js & TypeScript",
+	"image": "mcr.microsoft.com/devcontainers/typescript-node:18",
+	"features": {
+		"ghcr.io/rocker-org/devcontainer-features/pandoc:1": {},
+		"ghcr.io/devcontainers-contrib/features/typescript:1": {}
+	},
+	"postCreateCommand": [
+		"npm ci",
+		"bash install_no_trace_deps.sh",
+		"npm i -g @sap/cds-dk"
+	]
+}
