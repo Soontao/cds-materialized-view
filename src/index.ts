@@ -3,7 +3,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { cwdRequireCDS } from "cds-internal-tool";
-import { clearJobs, setupJobs } from "./jobs";
+import { setupJobs } from "./jobs";
 import { getLogger } from "./logger";
 import { rewriteAftreCSNRead, rewriteQueryForMaterializedView } from "./rewrite";
 
@@ -30,5 +30,3 @@ cds.once("served", () => {
 
 });
 
-
-export { clearJobs };

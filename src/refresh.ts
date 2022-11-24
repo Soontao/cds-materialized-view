@@ -18,6 +18,8 @@ export async function refreshTenants() {
 
   const { SELECT } = cds.ql;
 
+  const { "cds.xt.ModelProviderService": mps } = cds.services;
+
   try {
     const tenants: Array<{ ID: string }> = await cds.tx({ tenant: materializedConfig.t0 }, tx =>
       tx.run(SELECT.from("cds.xt.Tenants").columns("ID"))

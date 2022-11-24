@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { EntityDefinition, Request } from "cds-internal-tool";
+import { cwdRequireCDS, EntityDefinition, Request } from "cds-internal-tool";
 import { getLogger } from "./logger";
 import { getMaterializedViewName, isMaterializedView } from "./materialized";
 import { deepClone } from "./utils";
@@ -7,6 +7,7 @@ import { deepClone } from "./utils";
 // TODO: maybe custom builder instead of re-write query
 
 export function rewriteQueryForMaterializedView(req: Request) {
+  const cds = cwdRequireCDS();
   // TODO: maybe req.query could be a string
   // @ts-ignore
   if (typeof req.query !== "object" || typeof req.query?.SELECT?.from?.ref?.[0] !== "string") {
@@ -17,7 +18,7 @@ export function rewriteQueryForMaterializedView(req: Request) {
     return;
   }
   // @ts-ignore
-  if (!isMaterializedView(db.model.definitions[req.query.SELECT.from.ref[0]])) {
+  if (!isMaterializedView(cds.db.model.definitions[req.query.SELECT.from.ref[0]])) {
     // TODO: should use tenant model
     return;
   }

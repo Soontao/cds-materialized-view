@@ -1,7 +1,4 @@
 import { cwdRequireCDS, setupTest } from "cds-internal-tool";
-import { clearJobs } from "../src";
-import { sleep } from "../src/utils";
-
 
 describe("Main Test Suite", () => {
 
@@ -11,16 +8,15 @@ describe("Main Test Suite", () => {
 
   cds.env.materialized = {
     check: {
-      tenant: {
-        interval: 1
-      },
-      view: {
-        interval: 1
-      }
+      tenant: { interval: 1 },
+      view: { interval: 1 },
     }
   }
 
   axios.defaults.auth = { username: 'alice', password: '' }
+
+  const { sleep } = require("../src/utils")
+  const { clearJobs } = require("../src/jobs")
 
   beforeAll(async () => {
     // subscribe tenant 1
