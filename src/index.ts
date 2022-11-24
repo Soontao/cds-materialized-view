@@ -1,71 +1,13 @@
 /* eslint-disable camelcase */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { CQN, cwdRequireCDS, Definition, EntityDefinition } from "cds-internal-tool";
+import { cwdRequireCDS, EntityDefinition } from "cds-internal-tool";
+import { materializedConfig } from "./config";
 import { ANNOTATIONS } from "./constants";
-import { deepClone, MATERIALIZED_VIEW_PREFIX } from "./utils";
-
-interface ViewRefreshContext {
-  /**
-   * entity name
-   */
-  name: string,
-  /**
-   * tenant id
-   */
-  tenant: string,
-  /**
-   * last refresh timestamp
-   */
-  lastRefreshAt: number,
-  /**
-   * configured interval
-   */
-  interval: number,
-  /**
-   * select
-   */
-  query?: CQN,
-  /**
-   * projection
-   */
-  projection?: any,
-  /**
-   * is running in another job
-   */
-  running: boolean,
-}
+import { getMaterializedViewName, isMaterializedView } from "./materialized";
+import { ViewRefreshContext } from "./types";
+import { deepClone } from "./utils";
 
 const cds = cwdRequireCDS();
-
-/**
- * check the entity definition is materialized view or not
- * 
- * @param def 
- * @returns 
- */
-function isMaterializedView(def: Definition): boolean {
-  if (def.query === undefined && def.projection === undefined) {
-    return false;
-  }
-  if (def[ANNOTATIONS.CDS_MATERIALIZED_VIEW] !== true) {
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * format given view name to materialized view name
- * 
- * @param name 
- * @returns 
- */
-function getMaterializedViewName(name: string) {
-  if (name.startsWith(MATERIALIZED_VIEW_PREFIX)) {
-    return name;
-  }
-  return MATERIALIZED_VIEW_PREFIX + name;
-}
 
 cds.once("served", () => {
 
@@ -126,8 +68,6 @@ cds.once("served", () => {
 
   const viewsToBeRefreshed = new Map<string, ViewRefreshContext>();
 
-  const t0 = cds.env.get("requires.multitenancy.t0") ?? "t0";
-
   // TODO: ensure only have one instance to refresh materialized view
 
   const { SELECT, INSERT, DELETE } = cds.ql;
@@ -136,7 +76,7 @@ cds.once("served", () => {
   setInterval(async () => {
     try {
       // TODO: check tenants is off-board
-      const tenants = await cds.tx({ tenant: t0 }, tx =>
+      const tenants = await cds.tx({ tenant: materializedConfig.t0 }, tx =>
         tx.run(SELECT.from("cds.xt.Tenants").columns("ID"))
       );
       for (const { ID: tenant } of tenants) {
@@ -172,7 +112,7 @@ cds.once("served", () => {
     catch (error) {
       logger.error("try to refresh materialized view failed", error);
     }
-  }, 15 * 1000); // TODO: parameter
+  }, materializedConfig.tenantCheckInterval);
 
 
   // JOB: refresh view content
@@ -212,6 +152,6 @@ cds.once("served", () => {
       }
     }
 
-  }, 1 * 1000); // TODO: parameter
+  }, materializedConfig.viewCheckInterval);
 
 });
