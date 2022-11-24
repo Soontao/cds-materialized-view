@@ -4,17 +4,17 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { cwdRequireCDS } from "cds-internal-tool";
 import { clearJobs, setupJobs } from "./jobs";
+import { getLogger } from "./logger";
 import { rewriteAftreCSNRead, rewriteQueryForMaterializedView } from "./rewrite";
 
 const cds = cwdRequireCDS();
-const logger = cds.log("materialize");
 
 cds.once("served", () => {
 
   const { "cds.xt.DeploymentService": ds, "cds.xt.ModelProviderService": mps } = cds.services;
 
   if (ds === undefined) {
-    logger.error("cds.xt.DeploymentService is not enabled, cds-materialized-view feature is disabled");
+    getLogger().error("cds.xt.DeploymentService is not enabled, cds-materialized-view feature is disabled");
     return;
   }
 

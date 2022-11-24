@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-
-import { cwdRequireCDS, EntityDefinition, Request } from "cds-internal-tool";
+import { EntityDefinition, Request } from "cds-internal-tool";
+import { getLogger } from "./logger";
 import { getMaterializedViewName, isMaterializedView } from "./materialized";
 import { deepClone } from "./utils";
-
-const cds = cwdRequireCDS();
-const logger = cds.log("materialize");
 
 // TODO: maybe custom builder instead of re-write query
 
@@ -39,7 +36,7 @@ export function rewriteAftreCSNRead(csn: any) {
       elements: deepClone(def.elements),
     } as EntityDefinition;
     csn.definitions[newDef.name] = newDef;
-    logger.debug("append materialized view", newDef);
+    getLogger().debug("append materialized view", newDef);
   }
   return csn;
 }

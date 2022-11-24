@@ -1,7 +1,5 @@
 import { ViewRefreshContext } from "./types";
 
-
-
 /**
  * view context information
  */

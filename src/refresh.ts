@@ -4,17 +4,19 @@
 import { concurrency } from "@newdash/newdash/concurrency";
 import { cwdRequireCDS, EntityDefinition } from "cds-internal-tool";
 import { materializedConfig } from "./config";
+import { getLogger } from "./logger";
 import { getMaterializedViewName, getMaterializedViewRefreshInterval, isMaterializedView } from "./materialized";
 import { viewsToBeRefreshed } from "./store";
 import { ViewRefreshContext } from "./types";
 import { deepClone } from "./utils";
 
-const cds = cwdRequireCDS();
-const logger = cds.log("materialize");
-
-const { SELECT, INSERT, DELETE } = cds.ql;
 
 export async function refreshTenants() {
+
+  const cds = cwdRequireCDS();
+  const logger = getLogger();
+
+  const { SELECT } = cds.ql;
 
   try {
     const tenants: Array<{ ID: string }> = await cds.tx({ tenant: materializedConfig.t0 }, tx =>
@@ -72,7 +74,12 @@ export async function refreshTenants() {
 
 
 export const refreshView = concurrency.limit(
+
   async function refreshView(context: ViewRefreshContext) {
+    const cds = cwdRequireCDS();
+    const logger = getLogger();
+    const { INSERT, DELETE } = cds.ql;
+
     try {
       // if materialized view data is still valid/fresh
       if (context.lastRefreshAt + context.interval > Date.now()) { return; }
