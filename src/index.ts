@@ -155,4 +155,6 @@ cds.once("served", () => {
 
   }, materializedConfig.viewCheckInterval * 1000);
 
+  // TODO: handler to stop job
+
 });

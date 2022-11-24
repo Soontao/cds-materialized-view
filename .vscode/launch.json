@@ -15,7 +15,9 @@
         "<node_internals>/**"
       ],
       "env": {
-        "DEBUG": "sql"
+        "DEBUG": "sql",
+        "cds_materialized_check_tenant_interval": "1",
+        "cds_materialized_check_view_interval": "1",
       },
     },
     {
