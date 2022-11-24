@@ -1,7 +1,8 @@
-
 import { cwdRequireCDS, setupTest } from "cds-internal-tool";
 
+import { clearJobs } from "../src";
 import { sleep } from "../src/utils";
+
 
 describe("Main Test Suite", () => {
 
@@ -29,7 +30,7 @@ describe("Main Test Suite", () => {
       "subscribedSubdomain": "subdomain1",
       "eventType": "CREATE"
     })
-    await sleep(5000)
+    await sleep(2000)
   })
 
   it('should support get metadata', async () => {
@@ -37,5 +38,15 @@ describe("Main Test Suite", () => {
     expect(data).toMatch(/UniqPeopleNames/)
   });
 
+  it('should support query objects', async () => {
+    const { data } = await axios.get("/app/UniqPeopleNames")
+    expect(data).toMatchSnapshot()
+  });
+
+
+  afterAll(async () => {
+    clearJobs()
+    await sleep(1000)
+  })
 
 });

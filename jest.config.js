@@ -2,7 +2,7 @@
  * @type {import("@jest/types").Config.ProjectConfig}
  */
 module.exports = {
-  testTimeout: 10 * 1000,
+  testTimeout: 30 * 1000,
   transform: {
     ".(ts|tsx)": "ts-jest",
   },

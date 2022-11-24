@@ -10,6 +10,8 @@ import { deepClone } from "./utils";
 
 const cds = cwdRequireCDS();
 
+const jobs = new Set<NodeJS.Timer>();
+
 cds.once("served", () => {
 
   const logger = cds.log("materialize");
@@ -74,87 +76,99 @@ cds.once("served", () => {
   const { SELECT, INSERT, DELETE } = cds.ql;
 
   // JOB: refresh view metadata
-  setInterval(async () => {
-    try {
-      // TODO: check tenants is off-board
-      const tenants = await cds.tx({ tenant: materializedConfig.t0 }, tx =>
-        tx.run(SELECT.from("cds.xt.Tenants").columns("ID"))
-      );
-      for (const { ID: tenant } of tenants) {
-        // @ts-ignore
-        const csn = await mps.getCsn({ tenant, toggles: ["*"], activated: true });
-        // REVISIT: if tenant get updated
-        for (const [name, def] of Object.entries<EntityDefinition>(csn.definitions)) {
-          if (!isMaterializedView(def)) {
-            continue;
-          }
-          const key = `${tenant}-${name}`;
 
-          // TODO: detect change
-          if (viewsToBeRefreshed.has(key)) {
-            continue;
-          }
 
-          viewsToBeRefreshed.set(
-            key,
-            {
-              name,
-              tenant,
-              query: def.query,
-              projection: def.projection,
-              lastRefreshAt: 0,
-              interval: (def[ANNOTATIONS.CDS_MATERIALIZED_INTERVAL] ?? materializedConfig.defaultViewRefreshInterval) * 1000, // TODO: document default value
-              running: false,
+  jobs.add(
+    setInterval(async () => {
+      try {
+        // TODO: check tenants is off-board
+        const tenants = await cds.tx({ tenant: materializedConfig.t0 }, tx =>
+          tx.run(SELECT.from("cds.xt.Tenants").columns("ID"))
+        );
+        for (const { ID: tenant } of tenants) {
+          // @ts-ignore
+          const csn = await mps.getCsn({ tenant, toggles: ["*"], activated: true });
+          // REVISIT: if tenant get updated
+          for (const [name, def] of Object.entries<EntityDefinition>(csn.definitions)) {
+            if (!isMaterializedView(def)) {
+              continue;
             }
-          );
+            const key = `${tenant}-${name}`;
+
+            // TODO: detect change
+            if (viewsToBeRefreshed.has(key)) {
+              continue;
+            }
+
+            viewsToBeRefreshed.set(
+              key,
+              {
+                name,
+                tenant,
+                query: def.query,
+                projection: def.projection,
+                lastRefreshAt: 0,
+                interval: (def[ANNOTATIONS.CDS_MATERIALIZED_INTERVAL] ?? materializedConfig.defaultViewRefreshInterval) * 1000, // TODO: document default value
+                running: false,
+              }
+            );
+          }
         }
       }
-    }
-    catch (error) {
-      logger.error("try to refresh materialized view failed", error);
-    }
-  }, materializedConfig.tenantCheckInterval * 1000);
+      catch (error) {
+        logger.error("try to refresh materialized view failed", error);
+      }
+    }, materializedConfig.tenantCheckInterval * 1000)
+  );
 
 
   // JOB: refresh view content
-  setInterval(async () => {
-    for (const context of viewsToBeRefreshed.values()) {
-      try {
-        if (context.lastRefreshAt + context.interval > Date.now()) {
-          continue;
-        }
-        if (context.running) {
-          continue;
-        }
-        context.running = false;
-        const viewName = context.name;
-        const materializedViewName = getMaterializedViewName(viewName);
-
-        // run in target tenant
-        await cds.tx({ tenant: context.tenant }, async tx => {
-          await tx.run(DELETE.from(materializedViewName));
-
-          // TODO: make the query to be raw query, do not use intermediate views.
-
-          if (context.query) {
-            // @ts-ignore
-            await tx.run(INSERT.into(materializedViewName).as(context.query));
+  jobs.add(
+    setInterval(async () => {
+      for (const context of viewsToBeRefreshed.values()) {
+        try {
+          if (context.lastRefreshAt + context.interval > Date.now()) {
+            continue;
           }
-          if (context.projection) {
-            // @ts-ignore
-            await tx.run(INSERT.into(materializedViewName).as({ SELECT: context.projection }));
+          if (context.running) {
+            continue;
           }
-        });
-      }
-      catch (error) {
-        // TODO: evict after failed too many times
-        logger.error("refresh materialized view", getMaterializedViewName(context.name), "failed");
-        context.running = false;
-      }
-    }
+          context.running = false;
+          const viewName = context.name;
+          const materializedViewName = getMaterializedViewName(viewName);
 
-  }, materializedConfig.viewCheckInterval * 1000);
+          // run in target tenant
+          await cds.tx({ tenant: context.tenant }, async tx => {
+            await tx.run(DELETE.from(materializedViewName));
+
+            // TODO: make the query to be raw query, do not use intermediate views.
+
+            if (context.query) {
+              // @ts-ignore
+              await tx.run(INSERT.into(materializedViewName).as(context.query));
+            }
+            if (context.projection) {
+              // @ts-ignore
+              await tx.run(INSERT.into(materializedViewName).as({ SELECT: context.projection }));
+            }
+          });
+        }
+        catch (error) {
+          // TODO: evict after failed too many times
+          logger.error("refresh materialized view", getMaterializedViewName(context.name), "failed");
+          context.running = false;
+        }
+      }
+
+    }, materializedConfig.viewCheckInterval * 1000)
+  );
 
   // TODO: handler to stop job
 
 });
+
+export function clearJobs() {
+  for (const job of jobs) {
+    clearInterval(job);
+  }
+}

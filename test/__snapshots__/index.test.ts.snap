@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Main Test Suite should support query objects 1`] = `
+{
+  "@odata.context": "$metadata#UniqPeopleNames",
+  "value": [
+    {
+      "Name": "Theo 2",
+    },
+    {
+      "Name": "Theo First",
+    },
+    {
+      "Name": "Theo Second",
+    },
+  ],
+}
+`;
