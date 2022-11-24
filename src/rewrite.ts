@@ -16,7 +16,7 @@ export function rewriteQueryForMaterializedView(req: Request) {
     return;
   }
   // @ts-ignore
-  if (!(req.query.SELECT.from.ref[0] in db.model.definitions)) {
+  if (!(req.query.SELECT.from.ref[0] in cds.db.model.definitions)) {
     return;
   }
   // @ts-ignore

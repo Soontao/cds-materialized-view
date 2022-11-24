@@ -1,4 +1,5 @@
 import { Definition } from "cds-internal-tool";
+import { materializedConfig } from "./config";
 import { ANNOTATIONS } from "./constants";
 import { MATERIALIZED_VIEW_PREFIX } from "./utils";
 
@@ -30,4 +31,8 @@ export function getMaterializedViewName(name: string) {
     return name;
   }
   return MATERIALIZED_VIEW_PREFIX + name;
+}
+
+export function getMaterializedViewRefreshInterval(def: Definition): number {
+  return (def[ANNOTATIONS.CDS_MATERIALIZED_INTERVAL] ?? materializedConfig.defaultViewRefreshInterval) * 1000;
 }

@@ -1,12 +1,10 @@
-/* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import { concurrency } from "@newdash/newdash/concurrency";
 import { cwdRequireCDS, EntityDefinition } from "cds-internal-tool";
 import { materializedConfig } from "./config";
-import { ANNOTATIONS } from "./constants";
-import { getMaterializedViewName, isMaterializedView } from "./materialized";
+import { getMaterializedViewName, getMaterializedViewRefreshInterval, isMaterializedView } from "./materialized";
 import { viewsToBeRefreshed } from "./store";
 import { ViewRefreshContext } from "./types";
 import { deepClone } from "./utils";
@@ -57,10 +55,10 @@ export async function refreshTenants() {
           {
             name,
             tenant,
-            query: def.query,
-            projection: def.projection,
+            query: deepClone(def.query),
+            projection: deepClone(def.projection),
             lastRefreshAt: 0,
-            interval: (def[ANNOTATIONS.CDS_MATERIALIZED_INTERVAL] ?? materializedConfig.defaultViewRefreshInterval) * 1000,
+            interval: getMaterializedViewRefreshInterval(def),
             running: false,
           }
         );
@@ -76,22 +74,21 @@ export async function refreshTenants() {
 export const refreshView = concurrency.limit(
   async function refreshView(context: ViewRefreshContext) {
     try {
-      if (context.lastRefreshAt + context.interval > Date.now()) {
-        return;
-      }
-      if (context.running) {
-        return;
-      }
+      // if materialized view data is still valid/fresh
+      if (context.lastRefreshAt + context.interval > Date.now()) { return; }
+      // if its running in an old job maybe
+      if (context.running) { return; }
+
       context.running = false;
+
       const viewName = context.name;
       const materializedViewName = getMaterializedViewName(viewName);
 
-      logger.info("start refresh view", context.name, "for tenant", context.tenant);
+      logger.info("refresh view", context.name, "for tenant", context.tenant, "started");
 
       // run in target tenant
       await cds.tx({ tenant: context.tenant }, async tx => {
         await tx.run(DELETE.from(materializedViewName));
-
         // TODO: make the query to be raw query, do not use intermediate views.
         if (context.query) {
           // @ts-ignore
@@ -102,6 +99,11 @@ export const refreshView = concurrency.limit(
           await tx.run(INSERT.into(materializedViewName).as({ SELECT: context.projection }));
         }
       });
+
+      logger.info("refresh view", context.name, "for tenant", context.tenant, "finished");
+
+      context.lastRefreshAt = Date.now();
+
     }
     catch (error) {
       // TODO: evict after failed too many times
