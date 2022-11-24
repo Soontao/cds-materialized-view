@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable camelcase */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { cwdRequireCDS, EntityDefinition } from "cds-internal-tool";
@@ -102,7 +103,7 @@ cds.once("served", () => {
               query: def.query,
               projection: def.projection,
               lastRefreshAt: 0,
-              interval: (def[ANNOTATIONS.CDS_MATERIALIZED_INTERVAL] ?? 60) * 1000, // TODO: document default value
+              interval: (def[ANNOTATIONS.CDS_MATERIALIZED_INTERVAL] ?? materializedConfig.defaultViewRefreshInterval) * 1000, // TODO: document default value
               running: false,
             }
           );
@@ -112,7 +113,7 @@ cds.once("served", () => {
     catch (error) {
       logger.error("try to refresh materialized view failed", error);
     }
-  }, materializedConfig.tenantCheckInterval);
+  }, materializedConfig.tenantCheckInterval * 1000);
 
 
   // JOB: refresh view content
@@ -152,6 +153,6 @@ cds.once("served", () => {
       }
     }
 
-  }, materializedConfig.viewCheckInterval);
+  }, materializedConfig.viewCheckInterval * 1000);
 
 });

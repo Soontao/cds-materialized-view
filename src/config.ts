@@ -14,23 +14,29 @@ export const materializedConfig = {
 
   /**
    * the interval between check tenant is update/onboard/off-board
+   * 
+   * in seconds
    */
   get tenantCheckInterval() {
-    return (cds.env.get("materialized.check.tenant.interval") ?? 60) * 1000;
+    return cds.env.get("materialized.check.tenant.interval") ?? 60;
   },
 
   /**
    * the interval between check each view is refresh or not
+   * 
+   * in seconds
    */
   get viewCheckInterval() {
-    return (cds.env.get("materialized.check.view.interval") ?? 1) * 1000;
+    return cds.env.get("materialized.check.view.interval") ?? 1;
   },
 
   /**
    * the default interval between each view to trigger refresh behavior
+   * 
+   * in seconds
    */
   get defaultViewRefreshInterval() {
-    return (cds.env.get("materialized.default.view.refresh.interval") ?? 3600) * 1000;
+    return cds.env.get("materialized.default.view.refresh.interval") ?? 3600;
   },
 
 };
