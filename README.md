@@ -25,8 +25,16 @@ entity Person {
 }
 
 @cds.materialized.view // create materialized view
-@cds.materialized.interval : 1 // refresh interval: per second
+@cds.materialized.interval : 3600 // refresh interval: per hour
 view UniqPersonNames as select distinct Name from Person;
 ```
+
+## Features
+
+- [ ] support create materialized view
+  - [ ] filter
+  - [ ] aggregation
+- [ ] shortcut for `$count` query
+- [ ] support new service(interface) to support refresh materialized view by API/Rest API
 
 ## [LICENSE](./LICENSE)

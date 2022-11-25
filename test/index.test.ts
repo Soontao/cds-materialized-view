@@ -38,6 +38,16 @@ describe("Main Test Suite", () => {
     expect(data).toMatchSnapshot()
   });
 
+  it('should support filter', async () => {
+    const { data } = await axios.get("/app/UniqPeopleNames?$filter=Name ne 'Theo 2'")
+    expect(data).toMatchSnapshot()
+  });
+
+  it('should support aggregation', async () => {
+    const { data } = await axios.get("/app/MaxHousePrice")
+    expect(data).toMatchSnapshot()
+  });
+
 
   afterAll(async () => {
     clearJobs()

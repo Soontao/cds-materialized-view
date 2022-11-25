@@ -42,6 +42,5 @@ entity ComplexTypeEntity {
       BlobDoc    : Binary;
 }
 
-@cds.materialized.view // create materialized view
-@cds.materialized.interval : 1 // refresh internval: per second
+
 view UniqPersonNames as select distinct Name from Person;

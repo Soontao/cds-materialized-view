@@ -1,5 +1,30 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Main Test Suite should support aggregation 1`] = `
+{
+  "@odata.context": "$metadata#MaxHousePrice",
+  "value": [
+    {
+      "maxPrice": 2357853,
+    },
+  ],
+}
+`;
+
+exports[`Main Test Suite should support filter 1`] = `
+{
+  "@odata.context": "$metadata#UniqPeopleNames",
+  "value": [
+    {
+      "Name": "Theo First",
+    },
+    {
+      "Name": "Theo Second",
+    },
+  ],
+}
+`;
+
 exports[`Main Test Suite should support query objects 1`] = `
 {
   "@odata.context": "$metadata#UniqPeopleNames",

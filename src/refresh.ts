@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import { concurrency } from "@newdash/newdash/concurrency";
-import { cwdRequireCDS, EntityDefinition } from "cds-internal-tool";
+import { CSN, cwdRequireCDS, EntityDefinition } from "cds-internal-tool";
 import { materializedConfig } from "./config";
 import { getLogger } from "./logger";
 import { getMaterializedViewName, getMaterializedViewRefreshInterval, isMaterializedView } from "./materialized";
@@ -21,23 +21,33 @@ export async function refreshTenants() {
   const { "cds.xt.ModelProviderService": mps } = cds.services;
 
   try {
-    const tenants: Array<{ ID: string }> = await cds.tx({ tenant: materializedConfig.t0 }, tx =>
-      tx.run(SELECT.from("cds.xt.Tenants").columns("ID"))
+    const tenants: Array<{ ID: string }> = await cds.tx(
+      {
+        tenant: materializedConfig.t0,
+        user: new cds.User.Privileged("materialized-view-job")
+      },
+      tx => tx.run(SELECT.from("cds.xt.Tenants").columns("ID"))
     );
 
     const tenantIds = tenants.map(({ ID }) => ID);
 
     // remove deleted tenant
     for (const [key, view] of viewsToBeRefreshed) {
-      if (tenantIds.includes(view.tenant)) {
-        return;
-      }
+      // if tenant still exist
+      if (tenantIds.includes(view.tenant)) { return; }
+      // if tenant was removed 
       viewsToBeRefreshed.delete(key);
     }
 
     for (const tenant of tenantIds) {
-      // @ts-ignore
-      const csn = await mps.getCsn({ tenant, toggles: ["*"], activated: true });
+      const csn: CSN = await mps.tx(
+        {
+          tenant: materializedConfig.t0,
+          user: new cds.User.Privileged("materialized-view-job")
+        },
+        // @ts-ignore
+        tx => tx.getCsn({ tenant, toggles: ["*"], activated: true })
+      );
       // REVISIT: if tenant get updated
       for (const [name, def] of Object.entries<EntityDefinition>(csn.definitions)) {
         if (!isMaterializedView(def)) {
@@ -96,7 +106,7 @@ export const refreshView = concurrency.limit(
       logger.info("refresh view", context.name, "for tenant", context.tenant, "started");
 
       // run in target tenant
-      await cds.tx({ tenant: context.tenant }, async tx => {
+      await cds.tx({ tenant: context.tenant, user: new cds.User.Privileged("materialized-view-job") }, async tx => {
         await tx.run(DELETE.from(materializedViewName));
         // TODO: make the query to be raw query, do not use intermediate views.
         if (context.query) {

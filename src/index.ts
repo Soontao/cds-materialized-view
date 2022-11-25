@@ -5,7 +5,7 @@
 import { cwdRequireCDS } from "cds-internal-tool";
 import { setupJobs } from "./jobs";
 import { getLogger } from "./logger";
-import { rewriteAftreCSNRead, rewriteQueryForMaterializedView } from "./rewrite";
+import { rewriteAfterCSNRead, rewriteQueryForMaterializedView } from "./rewrite";
 
 const cds = cwdRequireCDS();
 
@@ -19,7 +19,7 @@ cds.once("served", () => {
   }
 
   // REWRITE: tenant CSN for tenant onboard/upgrade
-  mps.prepend((mps: any) => { mps.after("getCsn", rewriteAftreCSNRead); });
+  mps.prepend((mps: any) => { mps.after("getCsn", rewriteAfterCSNRead); });
 
   // REWRITE: database query
   cds.db.prepend(db => { db.before("READ", rewriteQueryForMaterializedView); });

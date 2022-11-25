@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { cwdRequireCDS, EntityDefinition, Request } from "cds-internal-tool";
+import { cwdRequireCDS, Definition, EntityDefinition, Request } from "cds-internal-tool";
 import { getLogger } from "./logger";
 import { getMaterializedViewName, isMaterializedView } from "./materialized";
 import { deepClone } from "./utils";
@@ -26,15 +26,15 @@ export function rewriteQueryForMaterializedView(req: Request) {
   req.query.SELECT.from.ref[0] = getMaterializedViewName(req.query.SELECT.from.ref[0]);
 }
 
-export function rewriteAftreCSNRead(csn: any) {
-  for (const [name, def] of Object.entries<EntityDefinition>(csn.definitions)) {
+export function rewriteAfterCSNRead(csn: any) {
+  for (const [name, def] of Object.entries<Definition>(csn.definitions)) {
     if (!isMaterializedView(def)) {
       continue;
     }
     const newDef = {
       name: getMaterializedViewName(name),
       kind: "entity",
-      elements: deepClone(def.elements),
+      elements: deepClone(def.elements) // TODO: elements type could not be undefined,
     } as EntityDefinition;
     csn.definitions[newDef.name] = newDef;
     getLogger().debug("append materialized view", newDef);
