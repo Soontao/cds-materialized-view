@@ -34,6 +34,8 @@ view UniqPersonNames as select distinct Name from Person;
 - [ ] support create materialized view
   - [ ] filter
   - [ ] aggregation
+  - [ ] join base table
+  - [ ] virtual
 - [ ] shortcut for `$count` query
 - [ ] support new service(interface) to support refresh materialized view by API/Rest API
 
