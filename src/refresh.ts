@@ -96,9 +96,9 @@ export const refreshView = concurrency.limit(
       // if materialized view data is still valid/fresh
       if (context.lastRefreshAt + context.interval > Date.now()) { return; }
       // if its running in an old job maybe
-      if (context.running) { return; }
+      if (context.running) { return; } // REVISIT: maybe lock by table ?
 
-      context.running = false;
+      context.running = true; // lock
 
       const viewName = context.name;
       const materializedViewName = getMaterializedViewName(viewName);
