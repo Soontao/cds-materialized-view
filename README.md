@@ -8,13 +8,30 @@
 
 ## Get Started
 
+### Prerequisites
+
+Project need to enabled the [`cds-mtxs`](https://cap.cloud.sap/docs/guides/multitenancy/mtxs) features firstly, `cds-materialized-view` heavily depends on the module
+
+### Setup
+
+enable plugin
+
 ```json
 {
   "cds": {
-    "plugins": ["cds-materialized-view"]
+    "plugins": ["cds-materialized-view"],
+    "materialized": {
+      "view": {
+        "refresh": {
+          "interval": 1800
+        }
+      }
+    }
   }
 }
 ```
+
+then annotate some view with annotations
 
 ```groovy
 namespace test.resources.csv.app.db;
@@ -28,6 +45,16 @@ entity Person {
 @cds.materialized.interval : 3600 // refresh interval: per hour
 view UniqPersonNames as select distinct Name from Person;
 ```
+
+now, it works!
+
+## Parameters
+
+- `cds.materialized.check.tenant.interval` - default `60 seconds` - used to refresh the tenant information
+- `cds.materialized.check.view.interval` - default `1 second` - used to check views need to be refreshed, then refresh them
+- `cds.materialized.view.refresh.jobs` - default `true` - enable job to refresh views, typically maybe need to setup only one instance to run the jobs
+- `cds.materialized.view.refresh.interval` - default `3600 seconds` - default global refresh interval for materialized view, for each view developer could use `@cds.materialized.interval` annotation to overwrite this
+- `cds.materialized.view.refresh.concurrency` - default `10` - the concurrency of materialized view refresh
 
 ## Features
 
