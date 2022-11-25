@@ -72,6 +72,7 @@ now, it works!
 - [ ] shortcut for `$count` query
   - [ ] hottest query
   - [ ] count all
+- [ ] support `last-refresh-at`
 - [ ] support to `redirect` to existed materialized view
 - [ ] support new service(interface) to support refresh materialized view by API/Rest API
 
