@@ -16,5 +16,5 @@ service AppService {
   view MaxHousePrice as
     select max(
       h.price
-    ) as maxPrice : Integer from db.House as h;
+    ) as maxPrice : Decimal from db.House as h;
 }

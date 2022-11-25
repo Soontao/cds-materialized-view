@@ -31,12 +31,21 @@ view UniqPersonNames as select distinct Name from Person;
 
 ## Features
 
-- [ ] support create materialized view
-  - [ ] filter
-  - [ ] aggregation
-  - [ ] join base table
-  - [ ] virtual
+- [x] support materialized view
+  - [x] create table for materialized view
+  - [x] rewrite query
+    - [ ] rewrite string query
+    - [ ] rewrite array query
+  - [x] filter
+  - [x] aggregation
+  - [ ] view join table
+  - [ ] virtual elements
+  - [ ] projection join
+- [ ] support reuse existed materialized view
 - [ ] shortcut for `$count` query
+  - [ ] hottest query
+  - [ ] count all
+- [ ] support to `redirect` to existed materialized view
 - [ ] support new service(interface) to support refresh materialized view by API/Rest API
 
 ## [LICENSE](./LICENSE)
