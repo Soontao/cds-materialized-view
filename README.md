@@ -10,7 +10,7 @@
 
 ### Prerequisites
 
-Project need to enabled the [`cds-mtxs`](https://cap.cloud.sap/docs/guides/multitenancy/mtxs) features firstly, `cds-materialized-view` heavily depends on the module
+`cds-materialized-view` depends on the [`cds-mtxs`](https://cap.cloud.sap/docs/guides/multitenancy/mtxs) features/services, so MUST setup `cds-mtxs` firstly.
 
 ### Setup
 
@@ -67,11 +67,11 @@ now, it works!
   - [ ] view join table
   - [ ] virtual elements
   - [ ] projection join
-- [ ] support reuse existed materialized view
 - [ ] shortcut for `$count` query
   - [ ] hottest query
   - [ ] count all
 - [ ] support `last-refresh-at`
+- [ ] support reuse existed materialized view
 - [ ] support to `redirect` to existed materialized view
 - [ ] support new service(interface) to support refresh materialized view by API/Rest API
 
