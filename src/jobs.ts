@@ -51,8 +51,7 @@ export async function refreshMaterializedViews() {
           );
 
           if (views.length > 0) {
-            const runner = concurrency.limit(refreshSingleView, materializedConfig.viewRefreshConcurrency);
-            const results = await Promise.allSettled(views.map(view => runner(view, csn, tx)));
+            const results = await Promise.allSettled(views.map(view => refreshSingleView(view, csn, tx)));
 
             for (const result of results) {
               if (result.status === "rejected") {
@@ -77,41 +76,42 @@ export async function refreshMaterializedViews() {
 
 
 }
+const refreshSingleView = concurrency.limit(
+  async function refreshSingleView(view: MetaRefreshJob, csn: any, tx: Service) {
+    const cds = cwdRequireCDS();
+    const { DELETE, INSERT, UPDATE } = cds.ql;
 
-async function refreshSingleView(view: MetaRefreshJob, csn: any, tx: Service) {
-  const cds = cwdRequireCDS();
-  const { DELETE, INSERT, UPDATE } = cds.ql;
+    const logger = getLogger();
 
-  const logger = getLogger();
+    const viewName = view.view;
+    const materializedViewName = getMaterializedViewName(viewName);
+    const def: EntityDefinition = csn.definitions[view.view];
+    const interval = getMaterializedViewRefreshInterval(def);
 
-  const viewName = view.view;
-  const materializedViewName = getMaterializedViewName(viewName);
-  const def: EntityDefinition = csn.definitions[view.view];
-  const interval = getMaterializedViewRefreshInterval(def);
+    await tx.run(DELETE.from(materializedViewName));
 
-  await tx.run(DELETE.from(materializedViewName));
+    // TODO: make the query to be raw query, do not use intermediate views.
+    if (def.query) {
+      // @ts-ignore
+      await tx.run(INSERT.into(materializedViewName).as(def.query));
+    } else if (def.projection) {
+      // @ts-ignore
+      await tx.run(INSERT.into(materializedViewName).as({ SELECT: def.projection }));
+    } else {
+      logger.warn("CSN of view", view.view, "not have 'projection' or 'query', cannot be processed");
+    }
 
-  // TODO: make the query to be raw query, do not use intermediate views.
-  if (def.query) {
-    // @ts-ignore
-    await tx.run(INSERT.into(materializedViewName).as(def.query));
-  } else if (def.projection) {
-    // @ts-ignore
-    await tx.run(INSERT.into(materializedViewName).as({ SELECT: def.projection }));
-  } else {
-    logger.warn("CSN of view", view.view, "not have 'projection' or 'query', cannot be processed");
-  }
+    // update next refresh time
+    await tx.run(
+      UPDATE
+        .entity(TABLE_MATERIALIZED_REFRESH_JOB)
+        .where({ view: view.view })
+        .set({ nextRefreshAt: new Date(Date.now() + interval).toISOString() })
+    );
 
-  // update next refresh time
-  await tx.run(
-    UPDATE
-      .entity(TABLE_MATERIALIZED_REFRESH_JOB)
-      .where({ view: view.view })
-      .set({ nextRefreshAt: new Date(Date.now() + interval).toISOString() })
-  );
-
-}
-
+  },
+  materializedConfig.viewRefreshConcurrency,
+);
 
 /**
  * jobs handles
