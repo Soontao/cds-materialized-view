@@ -1,9 +1,51 @@
+/* eslint-disable camelcase */
 /* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { cwdRequireCDS, Definition, EntityDefinition, Request } from "cds-internal-tool";
+import { materializedConfig } from "./config";
+import { TABLE_MATERIALIZED_REFRESH_JOB } from "./constants";
 import { getLogger } from "./logger";
 import { getMaterializedViewName, isMaterializedView } from "./materialized";
-import { deepClone } from "./utils";
+import { deepClone, privilegedUser } from "./utils";
+
+async function csn4(tenant?: string) {
+  const cds = cwdRequireCDS();
+  const { "cds.xt.ModelProviderService": mp } = cds.services;
+  return (mp as any).getCsn({ tenant, toggles: ["*"], activated: true }); // REVISIT: ['*'] should be the default
+}
+
+export async function refreshMaterializedInfo(data: any, req: Request<{ tenant: string, options: any }>) {
+  const logger = getLogger();
+  const { tenant, options } = req.data;
+  if (tenant === materializedConfig.t0) {
+    return;
+  }
+  const cds = cwdRequireCDS();
+
+  // 'deploy' for new subscription while 'upgrade'|'extend' for existed tenant
+  const csn = req.event === "deploy" ? (options.csn ?? await csn4()) : await csn4(tenant);
+
+  const views = Object.entries<EntityDefinition>(csn.definitions)
+    .filter(([, def]) => isMaterializedView(def))
+    .map(([name]) => ({
+      view: name,
+      nextRefreshAt: new Date().toISOString(),
+    }));
+
+  // after transaction
+  req.on("succeeded", async () => {
+    const { INSERT, DELETE } = cds.ql;
+    await cds.tx({ tenant, user: privilegedUser() }, async (tx) => {
+      await tx.run(DELETE.from(TABLE_MATERIALIZED_REFRESH_JOB)); // clean original table
+      if (views.length > 0) {
+        logger.info(views.length, "materialized view detected, writing them into meta");
+        await tx.run(INSERT.into("materialized_refresh_job").entries(...views));
+      }
+    });
+  });
+
+}
+
 
 // TODO: maybe custom builder instead of re-write query
 
@@ -34,6 +76,16 @@ export function rewriteQueryForMaterializedView(req: Request) {
   req.query.SELECT.from.ref[0] = getMaterializedViewName(req.query.SELECT.from.ref[0]);
 }
 
+export const metaTenantEntities = {
+  materialized_refresh_job: {
+    kind: "entity",
+    elements: {
+      view: { key: true, type: "cds.String", length: 255 },
+      nextRefreshAt: { type: "cds.Timestamp" },
+    }
+  }
+};
+
 /**
  * rewrite/enhance tenant CSN with materialized view (table) entities
  * 
@@ -43,6 +95,8 @@ export function rewriteQueryForMaterializedView(req: Request) {
 export function rewriteAfterCSNRead(csn: any) {
   const cds = cwdRequireCDS();
   const logger = getLogger();
+
+  let hasMaterializedView = false;
   for (const [name, def] of Object.entries<Definition>(csn.definitions)) {
 
     if (!isMaterializedView(def)) {
@@ -62,8 +116,14 @@ export function rewriteAfterCSNRead(csn: any) {
     }
 
     csn.definitions[newDef.name] = newDef;
+    hasMaterializedView = true;
     logger.debug("append materialized view", newDef);
 
   }
+
+  if (hasMaterializedView) {
+    csn.definitions = Object.assign(csn.definitions, metaTenantEntities);
+  }
+
   return csn;
 }

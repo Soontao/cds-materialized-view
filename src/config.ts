@@ -29,15 +29,6 @@ export const materializedConfig = {
   },
 
   /**
-   * the interval between check tenant is update/onboard/off-board
-   * 
-   * in seconds
-   */
-  get tenantCheckInterval() {
-    return cwdRequireCDS().env.get("materialized.check.tenant.interval") ?? 60;
-  },
-
-  /**
    * the interval between check each view is refresh or not
    * 
    * in seconds

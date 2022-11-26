@@ -1,4 +1,5 @@
 import { cwdRequireCDS, setupTest } from "cds-internal-tool";
+import { sleep } from "./utils";
 
 describe("Main Test Suite", () => {
 
@@ -15,10 +16,9 @@ describe("Main Test Suite", () => {
 
   axios.defaults.auth = { username: 'alice', password: '' }
 
-  const { sleep } = require("../src/utils")
   const { clearJobs } = require("../src/jobs")
 
-  beforeAll(async () => {
+  it('should subscribe new tenant', async () => {
     // subscribe tenant 1
     await axios.put('/-/cds/saas-provisioning/tenant/t1', {
       "subscribedTenantId": "t1",
@@ -26,7 +26,7 @@ describe("Main Test Suite", () => {
       "eventType": "CREATE"
     })
     await sleep(2000)
-  })
+  });
 
   it('should support get metadata', async () => {
     const { data } = await axios.get("/app/$metadata")
@@ -48,6 +48,9 @@ describe("Main Test Suite", () => {
     expect(data).toMatchSnapshot()
   });
 
+  it('should support un-subscribe', async () => {
+    await axios.delete('/-/cds/saas-provisioning/tenant/t1')
+  });
 
   afterAll(async () => {
     clearJobs()

@@ -17,3 +17,5 @@ export const ANNOTATIONS = {
    */
   CDS_MATERIALIZED_REDIRECT: "@cds.materialized.redirect",
 };
+
+export const TABLE_MATERIALIZED_REFRESH_JOB = "materialized_refresh_job";

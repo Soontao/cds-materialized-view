@@ -1,3 +1,4 @@
+import { cwdRequireCDS } from "cds-internal-tool";
 
 
 export function deepClone<T = any>(obj: T): T {
@@ -10,9 +11,9 @@ export function deepClone<T = any>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
 
-
-export function sleep(timeout: number) {
-  return new Promise(resolve => setTimeout(resolve, timeout));
-}
-
 export const MATERIALIZED_VIEW_PREFIX = "materialized.";
+
+export function privilegedUser() {
+  const cds = cwdRequireCDS();
+  return new cds.User.Privileged("materialized-view-job");
+}

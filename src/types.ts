@@ -30,3 +30,5 @@ export interface ViewRefreshContext {
    */
   running: boolean,
 }
+
+export interface MetaRefreshJob { view: string, nextRefreshAt: string | Date }

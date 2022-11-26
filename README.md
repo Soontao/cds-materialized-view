@@ -53,7 +53,6 @@ now, it works!
 - `cds.materialized.view.refresh.jobs` - default `true` - enable job to refresh views, typically maybe need to setup only one instance to run the jobs
 - `cds.materialized.view.refresh.interval` - default `3600 seconds` - default global refresh interval for materialized view, for each view developer could use `@cds.materialized.interval` annotation to overwrite this
 - `cds.materialized.view.refresh.concurrency` - default `10` - concurrency of materialized view refresh
-- `cds.materialized.check.tenant.interval` - default `60 seconds` - interval between refresh the tenant information
 - `cds.materialized.check.view.interval` - default `1 second` - interval between collect views need to be refreshed, then refresh them
 
 ## Features
