@@ -21,11 +21,17 @@ cds.once("served", () => {
     return;
   }
 
+  if (mps === undefined) {
+    logger.error("cds.xt.ModelProviderService is not enabled, cds-materialized-view feature is disabled");
+    return;
+  }
+
+
   // REWRITE: tenant CSN for tenant onboard/upgrade
   mps.prepend((mps: any) => mps.after("getCsn", rewriteAfterCSNRead));
 
   // REWRITE: insert/update materialized meta view for lock
-  ds.prepend((ds: any) => ds.after(["deploy", "upgrade", "extend"], refreshMaterializedInfo));
+  ds.prepend((ds) => ds.after(["deploy", "upgrade", "extend"], refreshMaterializedInfo));
 
   // REWRITE: database query
   cds.db.prepend(db => db.before("READ", rewriteQueryForMaterializedView));

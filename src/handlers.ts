@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { cwdRequireCDS, Definition, EntityDefinition, Request } from "cds-internal-tool";
+import { CSN, cwdRequireCDS, Definition, EntityDefinition, Request } from "cds-internal-tool";
 import { materializedConfig } from "./config";
 import { TABLE_MATERIALIZED_REFRESH_JOB } from "./constants";
 import { getLogger } from "./logger";
@@ -92,7 +92,7 @@ export const metaTenantEntities = {
  * @param csn 
  * @returns 
  */
-export function rewriteAfterCSNRead(csn: any) {
+export function rewriteAfterCSNRead(csn: CSN) {
   const cds = cwdRequireCDS();
   const logger = getLogger();
 

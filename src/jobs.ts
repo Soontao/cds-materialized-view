@@ -30,7 +30,7 @@ export async function refreshMaterializedViews() {
     const results = await Promise.allSettled(tenantIds.map(async tenant => {
 
       // TODO: cache csn maybe
-      const csn: CSN = await mps.tx(
+      const csn: CSN = await mps!.tx(
         {
           tenant: materializedConfig.t0,
           user: privilegedUser()
