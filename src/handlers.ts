@@ -1,14 +1,14 @@
 /* eslint-disable camelcase */
 /* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { CSN, cwdRequireCDS, Definition, EntityDefinition, Request } from "cds-internal-tool";
+import { CSN, cwdRequireCDS, DatabaseService, Definition, EntityDefinition, isCDSRequest, NextFunction, Request } from "cds-internal-tool";
 import { materializedConfig } from "./config";
-import { TABLE_MATERIALIZED_REFRESH_JOB } from "./constants";
+import { HTTP_HEADER_X_REFRESH_AT, TABLE_MATERIALIZED_REFRESH_JOB } from "./constants";
 import { getLogger } from "./logger";
 import { getMaterializedViewName, isMaterializedView } from "./materialized";
 import { deepClone, privilegedUser } from "./utils";
 
-async function csn4(tenant?: string) {
+async function csn4(tenant?: string): Promise<CSN> {
   const cds = cwdRequireCDS();
   const { "cds.xt.ModelProviderService": mp } = cds.services;
   return (mp as any).getCsn({ tenant, toggles: ["*"], activated: true }); // REVISIT: ['*'] should be the default
@@ -29,7 +29,8 @@ export async function refreshMaterializedInfo(data: any, req: Request<{ tenant: 
     .filter(([, def]) => isMaterializedView(def))
     .map(([name]) => ({
       view: name,
-      nextRefreshAt: new Date().toISOString(),
+      refreshAt: "1900-01-01T00:00:00.000Z",
+      nextRefreshAt: "1900-01-01T00:00:00.000Z",
     }));
 
   // after transaction
@@ -58,6 +59,7 @@ export async function refreshMaterializedInfo(data: any, req: Request<{ tenant: 
 export function rewriteQueryForMaterializedView(req: Request) {
   const cds = cwdRequireCDS();
   const { query } = req;
+
   // TODO: maybe req.query could be a string
   // @ts-ignore
   if (typeof query !== "object" || query.SELECT.from.ref.length !== 1 || typeof query?.SELECT?.from?.ref?.[0] !== "string") {
@@ -73,7 +75,37 @@ export function rewriteQueryForMaterializedView(req: Request) {
     return;
   }
   // @ts-ignore
-  req.query.SELECT.from.ref[0] = getMaterializedViewName(req.query.SELECT.from.ref[0]);
+  const entityName = req.query.SELECT.from.ref[0];
+  const viewName = getMaterializedViewName(entityName);
+
+  // @ts-ignore
+  req.query.SELECT.from.ref[0] = viewName;
+
+  (req as any).__materialized__ = { entityName, viewName };
+}
+
+/**
+ * append 
+ * 
+ * @param this 
+ * @param req 
+ * @param next 
+ * @returns 
+ */
+export async function appendRefreshAtHeader(this: DatabaseService, req: Request, next: NextFunction) {
+  const cds = cwdRequireCDS();
+  const { SELECT } = cds.ql;
+  if (isCDSRequest(cds.context) && materializedConfig.addRefreshAtHeader) {
+    if (typeof (req as any).__materialized__ === "object") {
+      const { entityName } = (req as any).__materialized__;
+      const r = await this.run(SELECT.one.from(TABLE_MATERIALIZED_REFRESH_JOB).where({ view: entityName }));
+      if (r !== null && typeof r.refreshAt === "string") {
+        cds.context._.res.header(HTTP_HEADER_X_REFRESH_AT, r.refreshAt);
+      }
+    }
+
+  }
+  return next();
 }
 
 export const metaTenantEntities = {
@@ -82,6 +114,7 @@ export const metaTenantEntities = {
     elements: {
       view: { key: true, type: "cds.String", length: 255 },
       nextRefreshAt: { type: "cds.Timestamp" },
+      refreshAt: { type: "cds.Timestamp" },
     }
   }
 };

@@ -4,7 +4,7 @@ import { ANNOTATIONS } from "./constants";
 import { MATERIALIZED_VIEW_PREFIX } from "./utils";
 
 /**
- * check the entity definition is materialized view or not
+ * check the entity definition is annotated with materialized view or not
  * 
  * @param def 
  * @returns 

@@ -39,8 +39,8 @@
     "typescript": "4.9.3"
   },
   "dependencies": {
-    "@newdash/newdash": "^5.21.4",
-    "cds-internal-tool": "1.6.1"
+    "@newdash/newdash": "5.21.4",
+    "cds-internal-tool": "1.6.5"
   },
   "license": "Apache-2.0"
 }

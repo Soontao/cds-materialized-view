@@ -19,3 +19,5 @@ export const ANNOTATIONS = {
 };
 
 export const TABLE_MATERIALIZED_REFRESH_JOB = "materialized_refresh_job";
+
+export const HTTP_HEADER_X_REFRESH_AT = "x-cds-materialized-view-refresh-at";

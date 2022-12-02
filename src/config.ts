@@ -1,5 +1,6 @@
 import { cwdRequireCDS } from "cds-internal-tool";
 import process from "process";
+import { HTTP_HEADER_X_REFRESH_AT } from "./constants";
 
 // TODO: document default value
 
@@ -35,6 +36,18 @@ export const materializedConfig = {
    */
   get viewCheckInterval() {
     return cwdRequireCDS().env.get("materialized.check.view.interval") ?? 1;
+  },
+
+  /**
+   * add refresh header or not
+   */
+  get addRefreshAtHeader() {
+    const cds = cwdRequireCDS();
+    if (cds.context instanceof cds.Request) {
+      if (cds.context.headers[HTTP_HEADER_X_REFRESH_AT] === "true")
+        return true;
+    }
+    return cds.env.get("materialized.view.refresh.header") ?? false;
   },
 
   /**

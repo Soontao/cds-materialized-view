@@ -106,7 +106,10 @@ const refreshSingleView = concurrency.limit(
       UPDATE
         .entity(TABLE_MATERIALIZED_REFRESH_JOB)
         .where({ view: view.view })
-        .set({ nextRefreshAt: new Date(Date.now() + interval).toISOString() })
+        .set({
+          refreshAt: new Date().toISOString(),
+          nextRefreshAt: new Date(Date.now() + interval).toISOString()
+        })
     );
 
   },

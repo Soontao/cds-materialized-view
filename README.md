@@ -54,6 +54,7 @@ now, it works!
 - `cds.materialized.view.refresh.interval` - default `3600 seconds` - default global refresh interval for materialized view, for each view developer could use `@cds.materialized.interval` annotation to overwrite this
 - `cds.materialized.view.refresh.concurrency` - default `10` - concurrency of materialized view refresh
 - `cds.materialized.check.view.interval` - default `1 second` - interval between collect views need to be refreshed, then refresh them
+- `cds.materialized.view.refresh.header` - default `false` - add `x-cds-materialized-view-refresh-at` header to response
 
 ## Features
 
@@ -70,7 +71,7 @@ now, it works!
 - [ ] shortcut for `$count` query
   - [ ] hottest query
   - [ ] count all
-- [ ] support `last-refresh-at`
+- [x] support `x-cds-materialized-view-refresh-at`
 - [ ] support reuse existed materialized view
 - [ ] support to `redirect` to existed materialized view
 - [ ] support new service(interface) to support refresh materialized view by API/Rest API

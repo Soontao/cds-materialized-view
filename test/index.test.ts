@@ -1,4 +1,5 @@
 import { cwdRequireCDS, setupTest } from "cds-internal-tool";
+import { HTTP_HEADER_X_REFRESH_AT } from "../src/constants";
 import { sleep } from "./utils";
 
 describe("Main Test Suite", () => {
@@ -36,6 +37,19 @@ describe("Main Test Suite", () => {
   it('should support query objects', async () => {
     const { data } = await axios.get("/app/UniqPeopleNames")
     expect(data).toMatchSnapshot()
+  });
+
+  it('should support query objects with refresh at header', async () => {
+    const { headers: h1 } = await axios.get("/app/UniqPeopleNames")
+    expect(h1[HTTP_HEADER_X_REFRESH_AT]).toBeUndefined()
+
+    const { headers: h2 } = await axios.get("/app/UniqPeopleNames", {
+      headers: {
+        [HTTP_HEADER_X_REFRESH_AT]: 'true'
+      }
+    })
+    expect(h2[HTTP_HEADER_X_REFRESH_AT]).toBeDefined()
+    expect(isNaN(new Date(h2[HTTP_HEADER_X_REFRESH_AT] as string).getTime())).toBeFalsy()
   });
 
   it('should support filter', async () => {

@@ -3,7 +3,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { cwdRequireCDS } from "cds-internal-tool";
-import { refreshMaterializedInfo, rewriteAfterCSNRead, rewriteQueryForMaterializedView } from "./handlers";
+import { appendRefreshAtHeader, refreshMaterializedInfo, rewriteAfterCSNRead, rewriteQueryForMaterializedView } from "./handlers";
 import { setupJobs } from "./jobs";
 import { getLogger } from "./logger";
 
@@ -28,13 +28,16 @@ cds.once("served", () => {
 
 
   // REWRITE: tenant CSN for tenant onboard/upgrade
-  mps.prepend((mps: any) => mps.after("getCsn", rewriteAfterCSNRead));
+  mps.prepend((mps) => mps.after("getCsn", rewriteAfterCSNRead));
 
   // REWRITE: insert/update materialized meta view for lock
   ds.prepend((ds) => ds.after(["deploy", "upgrade", "extend"], refreshMaterializedInfo));
 
   // REWRITE: database query
-  cds.db.prepend(db => db.before("READ", rewriteQueryForMaterializedView));
+  cds.db.prepend(db => {
+    db.before("READ", rewriteQueryForMaterializedView);
+    db.on("READ", appendRefreshAtHeader);
+  });
 
   setupJobs();
 
