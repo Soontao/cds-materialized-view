@@ -25,7 +25,7 @@ export async function refreshMaterializedInfo(data: any, req: Request<{ tenant: 
   // 'deploy' for new subscription while 'upgrade'|'extend' for existed tenant
   const csn = req.event === "deploy" ? (options.csn ?? await csn4()) : await csn4(tenant);
 
-  const views = Object.entries<EntityDefinition>(csn.definitions)
+  const localViews = Object.entries<EntityDefinition>(csn.definitions)
     .filter(([, def]) => isMaterializedView(def))
     .map(([name]) => ({
       view: name,
@@ -38,18 +38,22 @@ export async function refreshMaterializedInfo(data: any, req: Request<{ tenant: 
     const { INSERT, DELETE, SELECT } = cds.ql;
     await cds.tx({ tenant, user: privilegedUser() }, async (tx) => {
       const dbViews: Array<{ view: string }> = await tx.run(SELECT.from(TABLE_MATERIALIZED_REFRESH_JOB).columns("view"));
-      /**
-       * view existed in CSN but not in db
-       */
-      const newViews = views.filter(view => dbViews.find(dbView => dbView.view === view.view) === undefined);
+
       /**
        * view existed in db but not in CSN
        */
-      const cleanViews = dbViews.filter(dbView => views.find(view => view.view === dbView.view) === undefined);
-      await tx.run(DELETE.from(TABLE_MATERIALIZED_REFRESH_JOB).where({ view: { in: cleanViews } })); // clean original table
+      const cleanViews = dbViews.filter(dbView => localViews.find(view => view.view === dbView.view) === undefined);
+      if (cleanViews.length > 0) {
+        logger.info(cleanViews.length, "deprecated materialized view detected, clean them into meta");
+        await tx.run(DELETE.from(TABLE_MATERIALIZED_REFRESH_JOB).where({ view: { in: cleanViews } }));
+      }
 
+      /**
+       * view existed in CSN but not in db
+       */
+      const newViews = localViews.filter(view => dbViews.find(dbView => dbView.view === view.view) === undefined);
       if (newViews.length > 0) {
-        logger.info(views.length, "fresh materialized view detected, writing them into meta");
+        logger.info(localViews.length, "fresh materialized view detected, writing them into meta");
         await tx.run(INSERT.into(TABLE_MATERIALIZED_REFRESH_JOB).entries(...newViews));
       }
     });
