@@ -60,7 +60,7 @@ export const materializedConfig = {
   },
 
   /**
-   * view refresh concurrenty. how many view is refreshed in same time
+   * view refresh concurrency. how many view is refreshed in same time
    */
   get viewRefreshConcurrency() {
     return cwdRequireCDS().env.get("materialized.view.refresh.concurrency") ?? 10;
