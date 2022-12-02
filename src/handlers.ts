@@ -35,12 +35,22 @@ export async function refreshMaterializedInfo(data: any, req: Request<{ tenant: 
 
   // after transaction
   req.on("succeeded", async () => {
-    const { INSERT, DELETE } = cds.ql;
+    const { INSERT, DELETE, SELECT } = cds.ql;
     await cds.tx({ tenant, user: privilegedUser() }, async (tx) => {
-      await tx.run(DELETE.from(TABLE_MATERIALIZED_REFRESH_JOB)); // clean original table
-      if (views.length > 0) {
-        logger.info(views.length, "materialized view detected, writing them into meta");
-        await tx.run(INSERT.into("materialized_refresh_job").entries(...views));
+      const dbViews: Array<{ view: string }> = await tx.run(SELECT.from(TABLE_MATERIALIZED_REFRESH_JOB).columns("view"));
+      /**
+       * view existed in CSN but not in db
+       */
+      const newViews = views.filter(view => dbViews.find(dbView => dbView.view === view.view) === undefined);
+      /**
+       * view existed in db but not in CSN
+       */
+      const cleanViews = dbViews.filter(dbView => views.find(view => view.view === dbView.view) === undefined);
+      await tx.run(DELETE.from(TABLE_MATERIALIZED_REFRESH_JOB).where({ view: { in: cleanViews } })); // clean original table
+
+      if (newViews.length > 0) {
+        logger.info(views.length, "fresh materialized view detected, writing them into meta");
+        await tx.run(INSERT.into(TABLE_MATERIALIZED_REFRESH_JOB).entries(...newViews));
       }
     });
   });
