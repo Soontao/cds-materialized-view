@@ -57,8 +57,18 @@ describe("Main Test Suite", () => {
     expect(data).toMatchSnapshot()
   });
 
-  it('should support aggregation', async () => {
+  it('should support aggregation for select', async () => {
     const { data } = await axios.get("/app/MaxHousePrice")
+    expect(data).toMatchSnapshot()
+  });
+
+  it('should support aggregation for projection', async () => {
+    const { data } = await axios.get("/app/AvgHousePrice")
+    expect(data).toMatchSnapshot()
+  });
+
+  it('should support non mapping for projection', async () => {
+    const { data } = await axios.get("/app/FullNameHouse")
     expect(data).toMatchSnapshot()
   });
 

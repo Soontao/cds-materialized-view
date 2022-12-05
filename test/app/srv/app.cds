@@ -17,4 +17,21 @@ service AppService {
     select max(
       h.price
     ) as maxPrice : Decimal from db.House as h;
+
+  @cds.materialized.view
+  @cds.materialized.interval : 1
+  entity AvgHousePrice   as projection on db.House {
+    avg(price) as avgPrice : Decimal(24, 12),
+  };
+
+  @cds.materialized.view
+  @cds.materialized.interval : 1
+  entity FullNameHouse   as projection on db.House {
+    key ID,
+        price,
+        (
+          address.Country || ',' || address.Province || ',' || address.City || ',' || address.Street
+        ) as FullAddress : String(255)
+  };
+
 }

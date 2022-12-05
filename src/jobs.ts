@@ -79,9 +79,7 @@ export async function refreshMaterializedViews() {
 const refreshSingleView = concurrency.limit(
   async function refreshSingleView(view: MetaRefreshJob, csn: any, tx: Service) {
     const cds = cwdRequireCDS();
-    const { DELETE, INSERT, UPDATE } = cds.ql;
-
-    const logger = getLogger();
+    const { DELETE, INSERT, UPDATE, SELECT } = cds.ql;
 
     const viewName = view.view;
     const materializedViewName = getMaterializedViewName(viewName);
@@ -89,17 +87,9 @@ const refreshSingleView = concurrency.limit(
     const interval = getMaterializedViewRefreshInterval(def);
 
     await tx.run(DELETE.from(materializedViewName));
+    // @ts-ignore
+    await tx.run(INSERT.into(materializedViewName).as(SELECT.from(viewName)));
 
-    // TODO: make the query to be raw query, do not use intermediate views.
-    if (def.query) {
-      // @ts-ignore
-      await tx.run(INSERT.into(materializedViewName).as(def.query));
-    } else if (def.projection) {
-      // @ts-ignore
-      await tx.run(INSERT.into(materializedViewName).as({ SELECT: def.projection }));
-    } else {
-      logger.warn("CSN of view", view.view, "not have 'projection' or 'query', cannot be processed");
-    }
 
     // update next refresh time
     await tx.run(

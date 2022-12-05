@@ -1,5 +1,5 @@
-ID,Price,address_city
-97dc99ee-f61e-11ec-b939-0242ac120002,100000,Chengdu
-97dc9bc4-f61e-11ec-b939-0242ac120002,204324,Beijing
-97dc9cb4-f61e-11ec-b939-0242ac120002,2357853,Shanghai
-97dc9da4-f61e-11ec-b939-0242ac120002,23423,Guilin
+ID,Price,address_city,address_Country,address_Province,address_Street
+97dc99ee-f61e-11ec-b939-0242ac120002,100000,Chengdu,c1,p1,s1
+97dc9bc4-f61e-11ec-b939-0242ac120002,204324,Beijing,c1,p2,s3
+97dc9cb4-f61e-11ec-b939-0242ac120002,2357853,Shanghai,c1,p3,s4
+97dc9da4-f61e-11ec-b939-0242ac120002,23423,Guilin,c1,p4,s5

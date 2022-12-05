@@ -1,6 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Main Test Suite should support aggregation 1`] = `
+exports[`Main Test Suite should support aggregation for projection 1`] = `
+{
+  "@odata.context": "$metadata#AvgHousePrice",
+  "value": [
+    {
+      "avgPrice": 671400,
+    },
+  ],
+}
+`;
+
+exports[`Main Test Suite should support aggregation for select 1`] = `
 {
   "@odata.context": "$metadata#MaxHousePrice",
   "value": [
@@ -20,6 +31,34 @@ exports[`Main Test Suite should support filter 1`] = `
     },
     {
       "Name": "Theo Second",
+    },
+  ],
+}
+`;
+
+exports[`Main Test Suite should support non mapping for projection 1`] = `
+{
+  "@odata.context": "$metadata#FullNameHouse",
+  "value": [
+    {
+      "FullAddress": "c1,p1,Chengdu,s1",
+      "ID": "97dc99ee-f61e-11ec-b939-0242ac120002",
+      "price": 100000,
+    },
+    {
+      "FullAddress": "c1,p2,Beijing,s3",
+      "ID": "97dc9bc4-f61e-11ec-b939-0242ac120002",
+      "price": 204324,
+    },
+    {
+      "FullAddress": "c1,p3,Shanghai,s4",
+      "ID": "97dc9cb4-f61e-11ec-b939-0242ac120002",
+      "price": 2357853,
+    },
+    {
+      "FullAddress": "c1,p4,Guilin,s5",
+      "ID": "97dc9da4-f61e-11ec-b939-0242ac120002",
+      "price": 23423,
     },
   ],
 }

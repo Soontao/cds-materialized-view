@@ -1,17 +1,22 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable camelcase */
 /* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { CSN, cwdRequireCDS, DatabaseService, Definition, EntityDefinition, isCDSRequest, NextFunction, Request } from "cds-internal-tool";
+import {
+  CSN, cwdRequireCDS, DatabaseService, EntityDefinition,
+  isCDSRequest, NextFunction, Request, VarDefinition
+} from "cds-internal-tool";
 import { materializedConfig } from "./config";
 import { HTTP_HEADER_X_REFRESH_AT, TABLE_MATERIALIZED_REFRESH_JOB } from "./constants";
 import { getLogger } from "./logger";
 import { getMaterializedViewName, isMaterializedView } from "./materialized";
 import { deepClone, privilegedUser } from "./utils";
 
+
 async function csn4(tenant?: string): Promise<CSN> {
   const cds = cwdRequireCDS();
   const { "cds.xt.ModelProviderService": mp } = cds.services;
-  return (mp as any).getCsn({ tenant, toggles: ["*"], activated: true }); // REVISIT: ['*'] should be the default
+  return mp!.getCsn({ tenant, toggles: ["*"], activated: true }); // REVISIT: ['*'] should be the default
 }
 
 export async function refreshMaterializedInfo(data: any, req: Request<{ tenant: string, options: any }>) {
@@ -74,6 +79,13 @@ export function rewriteQueryForMaterializedView(req: Request) {
   const cds = cwdRequireCDS();
   const { query } = req;
 
+  // @ts-ignore
+  if (
+    cds.context instanceof cds.Request &&
+    cds.context?._?.req?.headers?.["x-cds-materialized-view-disable"] === "true"
+  ) {
+    return;
+  }
   // TODO: maybe req.query could be a string
   // @ts-ignore
   if (typeof query !== "object" || query.SELECT.from.ref.length !== 1 || typeof query?.SELECT?.from?.ref?.[0] !== "string") {
@@ -144,16 +156,26 @@ export function rewriteAfterCSNRead(csn: CSN) {
   const logger = getLogger();
 
   let hasMaterializedView = false;
-  for (const [name, def] of Object.entries<Definition>(csn.definitions)) {
+  for (const [name, def] of Object.entries<VarDefinition>(csn.definitions)) {
 
     if (!isMaterializedView(def)) {
+      continue;
+    }
+
+    if (def.kind !== "entity") {
+      logger.warn("definition", name, "is not a view, skip processing");
+      continue;
+    }
+
+    if (def.query === undefined && def.projection === undefined) {
+      logger.warn("definition", name, "is a raw entity, skip processing");
       continue;
     }
 
     const newDef = {
       name: getMaterializedViewName(name),
       kind: "entity",
-      elements: deepClone(def.elements) // TODO: elements type could not be undefined,
+      elements: deepClone(def.elements)
     } as EntityDefinition;
 
     for (const [name, ele] of Object.entries(newDef.elements)) {
@@ -162,7 +184,7 @@ export function rewriteAfterCSNRead(csn: CSN) {
       }
     }
 
-    csn.definitions[newDef.name] = newDef;
+    csn.definitions[newDef.name!] = newDef;
     hasMaterializedView = true;
     logger.debug("append materialized view", newDef);
 
