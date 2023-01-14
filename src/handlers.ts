@@ -28,7 +28,7 @@ export async function refreshMaterializedInfo(data: any, req: Request<{ tenant: 
   const cds = cwdRequireCDS();
 
   // 'deploy' for new subscription while 'upgrade'|'extend' for existed tenant
-  const csn = req.event === "deploy" ? (options.csn ?? await csn4()) : await csn4(tenant);
+  const csn = req.event === "deploy" ? (options?.csn ?? await csn4()) : await csn4(tenant);
 
   const localViews = Object.entries<EntityDefinition>(csn.definitions)
     .filter(([, def]) => isMaterializedView(def))

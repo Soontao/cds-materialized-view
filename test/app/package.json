@@ -13,6 +13,22 @@
           "database": ":memory:"
         }
       }
+    },
+    "build": {
+      "tasks": [
+        {
+          "for": "nodejs",
+          "options": {
+            "model": [
+              "db",
+              "src",
+              "app",
+              "@sap/cds/srv/mtx",
+              "@sap/cds-mtxs/db/extensions"
+            ]
+          }
+        }
+      ]
     }
   }
 }
