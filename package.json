@@ -39,7 +39,7 @@
     "typescript": "5.0.4"
   },
   "dependencies": {
-    "@newdash/newdash": "5.21.4",
+    "@newdash/newdash": "5.22.0",
     "cds-internal-tool": "1.7.3"
   },
   "optionalDependencies": {
